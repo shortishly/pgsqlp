@@ -29,8 +29,8 @@ SHELL_DEPS = \
 SHELL_OPTS = \
 	+pc unicode \
 	-config dev.config \
-	-s $(PROJECT) \
 	-enable-feature maybe_expr \
+	-s $(PROJECT) \
 	-s sync
 
 EUNIT_ERL_OPTS = \
