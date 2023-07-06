@@ -1,0 +1,186 @@
+%% -*- mode: erlang -*-
+%% Copyright (c) 2023 Peter Morgan <peter.james.morgan@gmail.com>
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%% http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+{#{action => identify_system},
+ <<"IDENTIFY_SYSTEM">>}.
+
+{#{slot => <<"sub">>,
+   mode => logical,
+   action => create_replication_slot,
+   output_plugin => <<"pgoutput">>,
+   snapshot => noexport_snapshot},
+ <<"CREATE_REPLICATION_SLOT \"sub\" LOGICAL pgoutput NOEXPORT_SNAPSHOT">>}.
+
+{#{slot => <<"sub">>,
+   mode => logical,
+   action => create_replication_slot,
+   output_plugin => <<"pgoutput">>,
+   snapshot => nothing},
+ <<"CREATE_REPLICATION_SLOT \"sub\" LOGICAL pgoutput (SNAPSHOT 'nothing')">>}.
+
+{#{action => create_replication_slot,
+   slot => <<"pg_16400_sync_16385_7251609182115975205">>,
+   mode => logical,
+   output_plugin => <<"pgoutput">>,
+   snapshot => use},
+ <<"CREATE_REPLICATION_SLOT \"pg_16400_sync_16385_7251609182115975205\" LOGICAL pgoutput (SNAPSHOT 'use')">>}.
+
+
+{#{slot => <<"pg_16397_sync_16385_7247443785989185573">>,
+   mode => logical,
+   action => create_replication_slot,
+   output_plugin => <<"pgoutput">>,
+   snapshot => use_snapshot},
+ <<"CREATE_REPLICATION_SLOT \"pg_16397_sync_16385_7247443785989185573\" LOGICAL pgoutput USE_SNAPSHOT">>}.
+
+{#{slot => <<"sub">>,
+   mode => logical,
+   options => #{proto_version => <<"1">>,
+                publication_names => <<"\"pub\"">>},
+   action => start_replication,
+   lsn => <<"0/0">>},
+ <<"START_REPLICATION SLOT \"sub\" LOGICAL 0/0 (proto_version '1', publication_names '\"pub\"')">>}.
+
+{#{action => 'begin',
+   isolation_level => repeatable_read,
+   read_level => read_only},
+ <<"BEGIN READ ONLY ISOLATION LEVEL REPEATABLE READ">>}.
+
+{#{slot => <<"pg_16397_sync_16389_7247557884046540839">>,
+   action => drop_replication_slot,
+   wait => true},
+ <<"DROP_REPLICATION_SLOT pg_16397_sync_16389_7247557884046540839 WAIT">>}.
+
+{#{output =>
+      [{function_call,[{function_name,{<<"pg_catalog">>,
+                                       <<"set_config">>}},
+                       {function_args,[{string_literal,<<"search_path">>},
+                                       {string_literal,<<>>},
+                                       {boolean_literal,false}]}]}],
+  action => select},
+ <<"SELECT pg_catalog.set_config('search_path', '', false)">>}.
+
+{#{output => [{column_reference,{<<"t">>,<<"pubname">>}}],
+   where =>
+       {in,[{column_references,[{column_reference,{<<"t">>,
+                                                   <<"pubname">>}}]},
+            [{string_literal,<<"pub">>}]]},
+   action => select,
+   from =>
+       [{from_item,[{table_name,[<<"pg_catalog">>,
+                                 <<"pg_publication">>]},
+                    {table_alias,<<"t">>}]}]},
+ <<"SELECT t.pubname FROM\n pg_catalog.pg_publication t WHERE\n t.pubname IN ('pub')">>}.
+{#{output =>
+       [{column_reference,{<<"t">>,<<"schemaname">>}},
+        {column_reference,{<<"t">>,<<"tablename">>}}],
+  where =>
+       {in,[{column_references,[{column_reference,{<<"t">>,
+                                                  <<"pubname">>}}]},
+            [{string_literal,<<"pub">>}]]},
+   action => select,distinct => true,
+   from =>
+       [{from_item,[{table_name,[<<"pg_catalog">>,
+                                 <<"pg_publication_tables">>]},
+                    {table_alias,<<"t">>}]}]},
+<<"SELECT DISTINCT t.schemaname, t.tablename \nFROM pg_catalog.pg_publication_tables t\n WHERE t.pubname IN ('pub')">>}.
+
+{#{output =>
+       [{column_reference,{<<"c">>,<<"oid">>}},
+        {column_reference,{<<"c">>,<<"relreplident">>}},
+        {column_reference,{<<"c">>,<<"relkind">>}}],
+   where =>
+       {operator_invocation,{infix_operator,[{column_reference,{<<"n">>,
+                                                                <<"nspname">>}},
+                                             {operator,<<"=">>},
+                                             {string_literal,<<"public">>},
+                                             {operator,<<"AND">>},
+                                             {column_reference,{<<"c">>,<<"relname">>}},
+                                             {operator,<<"=">>},
+                                             {string_literal,<<"col_json">>}]}},
+   action => select,
+   from =>
+       [{from_item,[{table_name,[<<"pg_catalog">>,<<"pg_class">>]},
+                    {table_alias,<<"c">>},
+                    {join_type,<<"INNER JOIN">>},
+                    {from_item,[{table_name,[<<"pg_catalog">>,
+                                             <<"pg_namespace">>]},
+                                {table_alias,<<"n">>}]},
+                    {operator_invocation,{infix_operator,[{column_reference,{<<"c">>,
+                                                                             <<"relnamespace">>}},
+                                                          {operator,<<"=">>},
+                                                          {column_reference,{<<"n">>,<<"oid">>}}]}}]}]},
+ <<"SELECT c.oid, c.relreplident, c.relkind  FROM pg_catalog.pg_class c  INNER JOIN pg_catalog.pg_namespace n        ON (c.relnamespace = n.oid) WHERE n.nspname = 'public'   AND c.relname = 'col_json'">>}.
+
+{#{output =>
+       [{column_reference,{<<"a">>,<<"attnum">>}},
+        {column_reference,{<<"a">>,<<"attname">>}},
+        {column_reference,{<<"a">>,<<"atttypid">>}},
+        {operator_invocation,{infix_operator,[{column_reference,{<<"a">>,
+                                                                 <<"attnum">>}},
+                                              {operator,<<"=">>},
+                                              {function_call,[{function_name,<<"ANY">>},
+                                                              {function_args,[{column_reference,{<<"i">>,
+                                                                                                 <<"indkey">>}}]}]}]}}],
+   where =>
+       {operator_invocation,{infix_operator,[{column_reference,{<<"a">>,
+                                                                <<"attnum">>}},
+                                             {operator,<<">">>},
+                                             {type_cast,[{numeric_literal,0},
+                                                         {type_name,[<<"pg_catalog">>,<<"int2">>]}]},
+                                             {operator,<<"AND NOT">>},
+                                             {column_reference,{<<"a">>,<<"attisdropped">>}},
+                                             {operator,<<"AND">>},
+                                             {column_reference,{<<"a">>,<<"attrelid">>}},
+                                             {operator,<<"=">>},
+                                             {numeric_literal,16613}]}},
+   action => select,
+   from =>
+       [{from_item,[{table_name,[<<"pg_catalog">>,
+                                 <<"pg_attribute">>]},
+                    {table_alias,<<"a">>},
+                    {join_type,<<"LEFT JOIN">>},
+                    {from_item,[{table_name,[<<"pg_catalog">>,<<"pg_index">>]},
+                                {table_alias,<<"i">>}]},
+                    {operator_invocation,{infix_operator,[{column_reference,{<<"i">>,
+                                                                             <<"indexrelid">>}},
+                                                          {operator,<<"=">>},
+                                                          {function_call,[{function_name,<<"pg_get_replica_identity_index">>},
+                                                                          {function_args,[{numeric_literal,16613}]}]}]}}]}],
+   order_by => {column_reference,{<<"a">>,<<"attnum">>}}},
+ <<"SELECT a.attnum,       a.attname,       a.atttypid,       a.attnum = ANY(i.indkey)  FROM pg_catalog.pg_attribute a  LEFT JOIN pg_catalog.pg_index i       ON (i.indexrelid = pg_get_replica_identity_index(16613)) WHERE a.attnum > 0::pg_catalog.int2   AND NOT a.attisdropped    AND a.attrelid = 16613 ORDER BY a.attnum">>}.
+
+
+{#{stdout => true,
+   action => copy,
+   column_references => [{column_reference,{<<"id">>}},
+                         {column_reference,{<<"a">>}}],
+   table_name => [<<"public">>,<<"col_json">>]},
+ <<"COPY public.col_json (id, a) TO STDOUT">>}.
+
+{#{output =>
+      [{column_reference,{<<"t">>,<<"schemaname">>}},
+       {column_reference,{<<"t">>,<<"tablename">>}},
+       {column_reference,{<<"t">>,<<"attnames">>}}],
+  where =>
+      {in,[{column_references,[{column_reference,{<<"t">>,
+                                                  <<"pubname">>}}]},
+           [{string_literal,<<"pub">>}]]},
+  action => select,distinct => true,
+  from =>
+      [{from_item,[{table_name,[<<"pg_catalog">>,
+                                <<"pg_publication_tables">>]},
+                   {table_alias,<<"t">>}]}]},
+ <<"SELECT DISTINCT t.schemaname, t.tablename \n, t.attnames\nFROM pg_catalog.pg_publication_tables t\n WHERE t.pubname IN ('pub')">>}.

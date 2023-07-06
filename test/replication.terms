@@ -1,0 +1,65 @@
+%% -*- mode: erlang -*-
+%% Copyright (c) 2023 Peter Morgan <peter.james.morgan@gmail.com>
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%% http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+{{<<>>,
+  [{action, identify_system}]},
+ <<"IDENTIFY_SYSTEM">>}.
+
+{{<<>>,
+  [{action,create_replication_slot},
+   {slot,<<"sub">>},
+   {mode,logical},
+   {output_plugin,<<"pgoutput">>},
+   {snapshot,noexport_snapshot}]},
+ <<"CREATE_REPLICATION_SLOT \"sub\" LOGICAL pgoutput NOEXPORT_SNAPSHOT">>}.
+
+{{<<>>,
+  [{action,create_replication_slot},
+   {slot,<<"pg_16397_sync_16385_7247443785989185573">>},
+   {mode,logical},
+   {output_plugin,<<"pgoutput">>},
+   {snapshot,use_snapshot}]},
+ <<"CREATE_REPLICATION_SLOT \"pg_16397_sync_16385_7247443785989185573\" LOGICAL pgoutput USE_SNAPSHOT">>}.
+
+{{<<>>,
+  [{action,start_replication},
+   {slot,<<"sub">>},
+   {mode,logical},
+   {lsn,<<"0/0">>},
+   {options,#{publication_names => <<"\"pub\"">>,
+              proto_version => <<"1">>}}]},
+  <<"START_REPLICATION SLOT \"sub\" LOGICAL 0/0 (proto_version '1', publication_names '\"pub\"')">>}.
+
+{{<<>>,
+  [{action,drop_replication_slot},
+   {slot,<<"pg_16397_sync_16389_7247557884046540839">>},
+   {wait,true}]},
+ <<"DROP_REPLICATION_SLOT pg_16397_sync_16389_7247557884046540839 WAIT">>}.
+
+{{<<>>,
+  [{action,create_replication_slot},
+   {slot,<<"sub">>},
+   {mode,logical},
+   {output_plugin,<<"pgoutput">>},
+   {snapshot,nothing}]},
+ <<"CREATE_REPLICATION_SLOT \"sub\" LOGICAL pgoutput (SNAPSHOT 'nothing')">>}.
+
+{{<<>>,
+ [{action,create_replication_slot},
+  {slot,<<"pg_16400_sync_16385_7251609182115975205">>},
+  {mode,logical},
+  {output_plugin,<<"pgoutput">>},
+  {snapshot,use}]},
+ <<"CREATE_REPLICATION_SLOT \"pg_16400_sync_16385_7251609182115975205\" LOGICAL pgoutput (SNAPSHOT 'use')">>}.

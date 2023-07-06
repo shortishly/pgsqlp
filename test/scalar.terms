@@ -1,0 +1,268 @@
+%% -*- mode: erlang -*-
+%% Copyright (c) 2023 Peter Morgan <peter.james.morgan@gmail.com>
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%% http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+{{<<>>,
+  {function_call,[{function_name,{<<"pg_catalog">>,
+                                  <<"set_config">>}},
+                  {function_args,[{string_literal,<<"search_path">>},
+                                  {string_literal,<<>>},
+                                  {boolean_literal,false}]}]}},
+ <<"pg_catalog.set_config('search_path', '', false)">>}.
+
+{{<<>>,
+  {column_reference,{<<"t">>, <<"pubname">>}}},
+ <<"t.pubname">>}.
+
+{{<<>>,
+  {in,[{column_references, [{column_reference,{<<"t">>, <<"pubname">>}}]},
+       [{string_literal,<<"pub">>}]]}},
+ <<"t.pubname IN ('pub')">>}.
+
+{{<<>>,
+  {operator_invocation,
+   {infix_operator,
+    [{column_reference,{<<"c">>, <<"relnamespace">>}},
+     {operator,<<"=">>},
+     {column_reference,{<<"n">>,<<"oid">>}}]}}},
+ <<"c.relnamespace = n.oid">>}.
+
+{{<<>>,
+  {operator_invocation,
+   {infix_operator,
+    [{column_reference,{<<"n">>, <<"nspname">>}},
+     {operator,<<"=">>},
+     {string_literal,<<"public">>},
+     {operator,<<"AND">>},
+     {column_reference,{<<"c">>,<<"relname">>}},
+     {operator,<<"=">>},
+     {string_literal,<<"col_json">>}]}}},
+ <<"n.nspname = 'public'   AND c.relname = 'col_json'">>}.
+
+{{<<>>,
+  {operator_invocation,
+   {infix_operator,
+    [{column_reference, {<<"n">>,<<"nspname">>}},
+     {operator,<<"AND">>},
+     {column_reference,{<<"c">>,<<"relname">>}}]}}},
+ <<"n.nspname   AND c.relname">>}.
+
+{{<<>>,
+  {operator_invocation,
+   {infix_operator,
+    [{column_reference, {<<"n">>,<<"nspname">>}},
+     {operator,<<"AND NOT">>},
+     {column_reference,{<<"c">>,<<"relname">>}}]}}},
+ <<"n.nspname   AND NOT c.relname">>}.
+
+{{<<>>,
+  {operator_invocation,
+   {infix_operator,
+    [{numeric_literal, 3},
+     {operator, <<"+">>},
+     {numeric_literal, 4},
+     {operator, <<"*">>},
+     {numeric_literal, 5}]}}},
+ <<"3 + 4 * 5">>}.
+
+{{<<>>,
+ {operator_invocation,
+  {infix_operator,
+   [{numeric_literal,3},
+    {operator, <<"+">>},
+    {group_subexpression,
+     {operator_invocation,
+      {infix_operator,
+       [{numeric_literal, 4},
+        {operator, <<"*">>},
+        {numeric_literal, 5}]}}}]}}},
+ <<"3 + (4 * 5)">>}.
+
+{{<<>>,
+  {operator_invocation,
+   {infix_operator,
+    [{function_call,
+      [{function_name,<<"array_length">>},
+       {function_args,[{column_reference,{<<"gpt">>,<<"attrs">>}},
+                       {numeric_literal,1}]}]},
+     {operator,<<"=">>},
+     {column_reference,{<<"c">>,<<"relnatts">>}}]}}},
+ <<"array_length(gpt.attrs, 1) = c.relnatts">>}.
+
+{{<<>>,
+  {in, [{column_references, [{column_reference,{<<"t">>, <<"pubname">>}}]},
+        [{string_literal, <<"pub">>}]]}},
+ <<"t.pubname IN ('pub')">>}.
+
+{{<<>>,
+  {operator_invocation,
+   {infix_operator,
+    [{column_reference,{<<"a">>,
+                        <<"attnum">>}},
+     {operator,<<"=">>},
+     {function_call,
+      [{function_name,<<"ANY">>},
+       {function_args,[{column_reference,{<<"i">>,
+                                          <<"indkey">>}}]}]}]}}},
+ <<"a.attnum = ANY(i.indkey)">>}.
+
+{{<<>>,
+ {operator_invocation,
+  {infix_operator,
+   [{column_reference,{<<"i">>,
+                       <<"indexrelid">>}},
+    {operator,<<"=">>},
+    {function_call,
+     [{function_name,<<"pg_get_replica_identity_index">>},
+      {function_args,[{numeric_literal,16613}]}]}]}}},
+ <<"i.indexrelid = pg_get_replica_identity_index(16613)">>}.
+
+{{<<>>,
+  {type_cast, [{numeric_literal, 0},
+               {type_name, [<<"pg_catalog">>, <<"int2">>]}]}},
+ <<"0::pg_catalog.int2">>}.
+
+{{<<>>,
+ {case_expression,
+  [{clauses,
+    [[{condition,
+       {operator_invocation,
+        {infix_operator,
+         [{column_reference, {<<"a">>}},
+          {operator, <<"=">>},
+          {numeric_literal, 1}]}}},
+      {then,
+       {string_literal, <<"one">>}}]]}]}},
+ <<"CASE WHEN a=1 THEN 'one'  END">>}.
+
+{{<<>>,
+ {case_expression,
+  [{clauses,
+    [[{condition,
+       {operator_invocation,
+        {infix_operator,
+         [{column_reference, {<<"a">>}},
+          {operator, <<"=">>},
+          {numeric_literal, 1}]}}},
+      {then,
+       {string_literal, <<"one">>}}],
+
+     [{condition,
+       {operator_invocation,
+        {infix_operator,
+         [{column_reference, {<<"a">>}},
+          {operator, <<"=">>},
+          {numeric_literal, 2}]}}},
+      {then,
+       {string_literal, <<"two">>}}]]}]}},
+ <<"CASE WHEN a=1 THEN 'one'"
+   "     WHEN a=2 THEN 'two' "
+   "END">>}.
+
+{{<<>>,
+ {case_expression,
+  [{clauses,
+    [[{condition,
+       {operator_invocation,
+        {infix_operator,
+         [{column_reference, {<<"a">>}},
+          {operator, <<"=">>},
+          {numeric_literal, 1}]}}},
+      {then,
+       {string_literal, <<"one">>}}],
+
+     [{condition,
+       {operator_invocation,
+        {infix_operator,
+         [{column_reference, {<<"a">>}},
+          {operator, <<"=">>},
+          {numeric_literal, 2}]}}},
+      {then,
+       {string_literal, <<"two">>}}]]},
+   {otherwise, {string_literal, <<"other">>}}]}},
+ <<"CASE WHEN a=1 THEN 'one'"
+   "     WHEN a=2 THEN 'two'"
+   "     ELSE 'other' "
+   "END">>}.
+
+{{<<>>,
+ {operator_invocation,
+  {infix_operator,
+   [{column_reference, {<<"a">>}},
+    {operator, <<"=">>},
+    {numeric_literal, 1}]}}},
+ <<"a=1">>}.
+
+{{<<>>, {string_literal, <<"one">>}},
+ <<"'one'">>}.
+
+{{<<>>, {numeric_literal, 6}},
+ <<"6">>}.
+
+{{<<>>, {boolean_literal, false}},
+ <<"false">>}.
+
+{{<<>>, {boolean_literal, true}},
+ <<"true">>}.
+
+{{<<>>, {null_literal, <<"null">>}},
+ <<"null">>}.
+
+{{<<>>,
+ {group_subexpression,
+  {operator_invocation,
+   {infix_operator,
+    [{function_call,
+      [{function_name,<<"array_length">>},
+       {function_args,
+        [{column_reference,{<<"gpt">>,<<"attrs">>}},
+         {numeric_literal,1}]}]},
+     {operator,<<"=">>},
+     {column_reference,{<<"c">>,<<"relnatts">>}}]}}}},
+ <<"(array_length(gpt.attrs, 1) = c.relnatts)">>}.
+
+{{<<>>,
+ {case_expression,
+  [{clauses,
+    [[{condition,
+       {operator_invocation,
+        {infix_operator,
+         [{function_call,
+           [{function_name,<<"array_length">>},
+            {function_args,
+             [{column_reference,{<<"gpt">>,<<"attrs">>}},
+              {numeric_literal,1}]}]},
+          {operator,<<"=">>},
+          {column_reference,{<<"c">>,<<"relnatts">>}}]}}},
+      {then,{null_literal,<<"NULL">>}}]]},
+   {otherwise,{column_reference,{<<"gpt">>,<<"attrs">>}}}]}},
+ <<"CASE WHEN array_length(gpt.attrs, 1) = c.relnatts   THEN NULL ELSE gpt.attrs END">>}.
+
+{{<<>>,
+ {case_expression,
+  [{clauses,
+    [[{condition,
+       {group_subexpression,
+        {operator_invocation,
+         {infix_operator,
+          [{function_call,
+            [{function_name,<<"array_length">>},
+             {function_args,
+              [{column_reference,{<<"gpt">>,<<"attrs">>}},
+               {numeric_literal,1}]}]},
+           {operator,<<"=">>},
+           {column_reference,{<<"c">>,<<"relnatts">>}}]}}}},
+      {then,{null_literal,<<"NULL">>}}]]},
+   {otherwise,{column_reference,{<<"gpt">>,<<"attrs">>}}}]}},
+ <<"CASE WHEN (array_length(gpt.attrs, 1) = c.relnatts)   THEN NULL ELSE gpt.attrs END">>}.
