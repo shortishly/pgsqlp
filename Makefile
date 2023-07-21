@@ -18,6 +18,12 @@ PROJECT = pgsqlp
 PROJECT_DESCRIPTION = PostgreSQL Parser
 PROJECT_VERSION = 0.1.0
 
+COVER = 1
+
+COVER_REPORT_DIR = _site/cover
+CT_LOGS_DIR = _site/ct
+EDOC_OPTS = {preprocess, true}, {dir, "_site/edoc"}
+
 DEPS = \
 	envy \
 	phrase \
@@ -62,4 +68,4 @@ dep_envy_commit = 0.7.2
 dep_phrase_commit = 0.1.0
 
 
-include erlang.mk
+include $(if $(ERLANG_MK_FILENAME),$(ERLANG_MK_FILENAME),erlang.mk)
