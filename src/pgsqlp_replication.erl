@@ -20,7 +20,6 @@
 
 
 -export([expression/0]).
--import(pgsqlp, [kv/2]).
 -import(pgsqlp, [t/1]).
 -import(pgsqlp, [to_atom/1]).
 -import(scran_branch, [alt/1]).
@@ -36,6 +35,7 @@
 -import(scran_combinator, [opt/1]).
 -import(scran_multi, [separated_list0/2]).
 -import(scran_multi, [separated_list1/2]).
+-import(scran_result, [kv/2]).
 -import(scran_sequence, [delimited/3]).
 -import(scran_sequence, [preceded/2]).
 -import(scran_sequence, [separated_pair/3]).

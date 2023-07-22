@@ -19,8 +19,6 @@
 -feature(maybe_expr, enable).
 
 
--export([kv/1]).
--export([kv/2]).
 -export([name/0]).
 -export([parse/1]).
 -export([priv_consult/1]).
@@ -35,6 +33,9 @@
 -import(scran_combinator, [is_not/1]).
 -import(scran_combinator, [map_parser/2]).
 -import(scran_combinator, [map_result/2]).
+-import(scran_result, [into_atom/1]).
+-import(scran_result, [into_map/1]).
+-import(scran_result, [into_snake_case/1]).
 
 
 start() ->
@@ -51,25 +52,13 @@ priv_consult(Filename) ->
 
 parse(SQL) ->
     maybe
-        {_, Result} ?= (alt([pgsqlp_select:expression(),
-                             pgsqlp_copy:expression(),
-                             pgsqlp_tx:expression(),
-                             pgsqlp_replication:expression()]))(SQL),
+        {_, Result} ?= (into_map(
+                          alt([pgsqlp_select:expression(),
+                               pgsqlp_copy:expression(),
+                               pgsqlp_tx:expression(),
+                               pgsqlp_replication:expression()])))(SQL),
 
-        maps:from_list(Result)
-    end.
-
-
-kv(Key, Parser) ->
-    fun
-        (Input) ->
-            (map_result(Parser, kv(Key)))(Input)
-    end.
-
-kv(Key) ->
-    fun
-        (Value) ->
-            {Key, Value}
+        Result
     end.
 
 
@@ -92,17 +81,7 @@ t() ->
 to_atom(Parser) ->
     fun
         (Input) ->
-            (map_result(
-               Parser,
-               fun
-                   (Result) ->
-                       binary_to_atom(
-                         iolist_to_binary(
-                           lists:join(
-                             "_",
-                             string:split(
-                               string:lowercase(Result), " "))))
-               end))(Input)
+            (into_atom(into_snake_case(Parser)))(Input)
     end.
 
 

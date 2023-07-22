@@ -20,13 +20,11 @@
 -export([column_references/0]).
 -export([expression/0]).
 -export([function_call/0]).
--import(pgsqlp, [kv/1]).
 -import(scran_branch, [alt/1]).
 -import(scran_character_complete, [digit1/0]).
 -import(scran_character_complete, [multispace0/0]).
 -import(scran_character_complete, [multispace1/0]).
 -import(scran_character_complete, [re/1]).
--import(scran_character_complete, [re_no_case/1]).
 -import(scran_character_complete, [tag/1]).
 -import(scran_character_complete, [tag_no_case/1]).
 -import(scran_combinator, [is_not/1]).
@@ -36,6 +34,7 @@
 -import(scran_multi, [many1/1]).
 -import(scran_multi, [separated_list0/2]).
 -import(scran_multi, [separated_list1/2]).
+-import(scran_result, [kv/2]).
 -import(scran_sequence, [delimited/3]).
 -import(scran_sequence, [pair/2]).
 -import(scran_sequence, [preceded/2]).
@@ -61,15 +60,14 @@ expression() ->
 group_subexpression() ->
     fun
         (Input) ->
-            (map_result(
-               delimited(
-                 sequence([multispace0(),
-                           tag("("),
-                           multispace0()]),
-                 expression(),
-                 sequence([multispace0(),
-                           tag(")")])),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME,
+                delimited(
+                  sequence([multispace0(),
+                            tag("("),
+                            multispace0()]),
+                  expression(),
+                  sequence([multispace0(),
+                            tag(")")]))))(Input)
 
     end.
 
@@ -82,108 +80,97 @@ conditional() ->
 case_expression() ->
     fun
         (Input) ->
-            (map_result(
-               terminated(
-                 preceded(
-                   sequence(
-                     [multispace0(),
-                      tag_no_case("CASE")]),
+            (kv(?FUNCTION_NAME,
+                terminated(
+                  preceded(
+                    sequence(
+                      [multispace0(),
+                       tag_no_case("CASE")]),
 
-                   sequence(
-                     [map_result(
-                        many1(
-                          sequence(
-                            [map_result(
-                               preceded(
-                                 sequence(
-                                   [multispace1(),
-                                    tag_no_case("WHEN"),
-                                    multispace1()]),
-                                 expression()),
-                               kv(condition)),
+                    sequence(
+                      [kv(clauses,
+                          many1(
+                            sequence(
+                              [kv(condition,
+                                  preceded(
+                                    sequence(
+                                      [multispace1(),
+                                       tag_no_case("WHEN"),
+                                       multispace1()]),
+                                    expression())),
 
-                             map_result(
-                               preceded(
-                                 sequence(
-                                   [multispace1(),
-                                    tag_no_case("THEN"),
-                                    multispace1()]),
-                                 expression()),
-                               kv(then))])),
-                        kv(clauses)),
+                               kv(then,
+                                  preceded(
+                                    sequence(
+                                      [multispace1(),
+                                       tag_no_case("THEN"),
+                                       multispace1()]),
+                                    expression()))]))),
 
-                      opt(map_result(
-                            preceded(
-                              sequence(
-                                [multispace1(),
-                                 tag_no_case("ELSE"),
-                                 multispace1()]),
-                              expression()),
-                            kv(otherwise)))])),
-                 sequence(
-                   [multispace1(),
-                    tag_no_case("END"),
-                    multispace0()])),
-               kv(?FUNCTION_NAME)))(Input)
+                       opt(kv(otherwise,
+                              preceded(
+                                sequence(
+                                  [multispace1(),
+                                   tag_no_case("ELSE"),
+                                   multispace1()]),
+                                expression())))])),
+                  sequence(
+                    [multispace1(),
+                     tag_no_case("END"),
+                     multispace0()]))))(Input)
     end.
 
 type_cast() ->
     fun
         (Input) ->
-            (map_result(
-               sequence(
-                 [alt([literal_value()]),
-                  preceded(
-                    tag_no_case("::"),
-                    type_name())]),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME,
+                sequence(
+                  [alt([literal_value()]),
+                   preceded(
+                     tag_no_case("::"),
+                     type_name())])))(Input)
     end.
 
 
 function_call() ->
     fun
         (Input) ->
-            (map_result(
-               sequence([function_name(), function_args()]),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME,
+                sequence([function_name(), function_args()])))(Input)
     end.
 
 
 function_name() ->
     fun
         (Input) ->
-            (map_result(
+            (kv(?FUNCTION_NAME,
                alt([map_result(
                       separated_pair(schema_name(), tag("."), name()),
                       fun erlang:list_to_tuple/1),
 
                     tag_no_case("ANY"),
 
-                    name()]),
-               kv(?FUNCTION_NAME)))(Input)
+                    name()])))(Input)
     end.
 
 
 function_args() ->
     fun
         (Input) ->
-            (map_result(
-               delimited(
-                 tag("("),
-                 separated_list0(
-                   sequence([tag(","), multispace0()]),
-                   expression()),
-                 tag(")")),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME,
+                delimited(
+                  tag("("),
+                  separated_list0(
+                    sequence([tag(","), multispace0()]),
+                    expression()),
+                  tag(")"))))(Input)
     end.
 
 
 operator_invocation() ->
     fun
         (Input) ->
-            (map_result(
-               infix_operator(),
-              kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME, infix_operator()))(Input)
     end.
 
 
@@ -220,12 +207,11 @@ infix_operator(OperatorParser, ExpressionParser) ->
                 {NextIterationInput, RHS} ?= ExpressionParser(RHSInput),
 
 
-                (map_result(
-                   ?FUNCTION_NAME(
-                      OperatorParser,
-                      ExpressionParser,
-                      [RHS, {operator, Operator}, LHS]),
-                   kv(?FUNCTION_NAME)))(NextIterationInput)
+                (kv(?FUNCTION_NAME,
+                    ?FUNCTION_NAME(
+                       OperatorParser,
+                       ExpressionParser,
+                       [RHS, {operator, Operator}, LHS])))(NextIterationInput)
             end
     end.
 
@@ -270,45 +256,42 @@ operator() ->
 column_references() ->
     fun
         (Input) ->
-            (map_result(
+            (kv(?FUNCTION_NAME,
                separated_list1(
                  sequence([tag(","), multispace0()]),
-                 column_reference()),
-               kv(?FUNCTION_NAME)))(Input)
+                 column_reference())))(Input)
     end.
 
 
 column_reference() ->
     fun
         (Input) ->
-            (map_result(
+            (kv(?FUNCTION_NAME,
                map_result(
                  separated_list1(
                    tag("."),
                    name()),
-                 fun erlang:list_to_tuple/1),
-              kv(?FUNCTION_NAME)))(Input)
+                 fun erlang:list_to_tuple/1)))(Input)
     end.
 
 
 in_expression() ->
     fun
         (Input) ->
-            (map_result(
-               pair(
-                 column_references(),
-                 preceded(
-                   sequence(
-                     [multispace1(),
-                      tag_no_case("IN"),
-                      multispace1()]),
-                   delimited(
-                     sequence([tag("("), multispace0()]),
-                     separated_list0(
-                       sequence([tag(","), multispace0()]),
-                       expression()),
-                     sequence([multispace0(), tag(")")])))),
-               kv(in)))(Input)
+            (kv(in,
+                pair(
+                  column_references(),
+                  preceded(
+                    sequence(
+                      [multispace1(),
+                       tag_no_case("IN"),
+                       multispace1()]),
+                    delimited(
+                      sequence([tag("("), multispace0()]),
+                      separated_list0(
+                        sequence([tag(","), multispace0()]),
+                        expression()),
+                      sequence([multispace0(), tag(")")]))))))(Input)
     end.
 
 
@@ -325,53 +308,47 @@ literal_value() ->
 null_literal() ->
     fun
         (Input) ->
-            (map_result(
-               tag_no_case("null"),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME, tag_no_case("null")))(Input)
     end.
 
 string_literal() ->
     fun
         (Input) ->
-            (map_result(
-               delimited(
-                 tag("'"),
-                 re("[a-z_]*"),
-                 tag("'")),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME,
+                delimited(
+                  tag("'"),
+                  re("[a-z_]*"),
+                  tag("'"))))(Input)
     end.
 
 numeric_literal() ->
     fun
         (Input) ->
-            (map_result(
-               map_result(
-                 digit1(),
-                 fun erlang:binary_to_integer/1),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME,
+                map_result(
+                  digit1(),
+                  fun erlang:binary_to_integer/1)))(Input)
     end.
 
 boolean_literal() ->
     fun
         (Input) ->
-            (map_result(
-               map_result(
-                 alt([tag_no_case("true"), tag_no_case("false")]),
-                 fun
-                     (Term) ->
-                         binary_to_existing_atom(string:lowercase(Term))
-                 end),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME,
+                map_result(
+                  alt([tag_no_case("true"), tag_no_case("false")]),
+                  fun
+                      (Term) ->
+                          binary_to_existing_atom(string:lowercase(Term))
+                  end)))(Input)
     end.
 
 type_name() ->
     fun
         (Input) ->
-            (map_result(
-               separated_list0(
-                 tag("."),
-                 re("[a-z_][a-z0-9_]*")),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME,
+                separated_list0(
+                  tag("."),
+                  re("[a-z_][a-z0-9_]*"))))(Input)
     end.
 
 

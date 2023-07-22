@@ -30,4 +30,5 @@ package-lock.json
 package.json
 relx
 test/*.beam
+test/ct.cover.spec
 xrefr

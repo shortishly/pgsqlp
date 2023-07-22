@@ -66,6 +66,7 @@ dep_scran = git https://github.com/shortishly/scran.git
 
 dep_envy_commit = 0.7.2
 dep_phrase_commit = 0.1.0
+dep_scran_commit = main
 
 
 include $(if $(ERLANG_MK_FILENAME),$(ERLANG_MK_FILENAME),erlang.mk)

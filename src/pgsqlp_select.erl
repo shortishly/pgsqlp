@@ -20,8 +20,6 @@
 
 
 -export([expression/0]).
--import(pgsqlp, [kv/1]).
--import(pgsqlp, [kv/2]).
 -import(pgsqlp, [t/1]).
 -import(pgsqlp, [to_atom/1]).
 -import(scran_branch, [alt/1]).
@@ -33,9 +31,9 @@
 -import(scran_character_complete, [tag_no_case/1]).
 -import(scran_combinator, [is_not/1]).
 -import(scran_combinator, [map_parser/2]).
--import(scran_combinator, [map_result/2]).
 -import(scran_combinator, [opt/1]).
 -import(scran_multi, [separated_list1/2]).
+-import(scran_result, [kv/2]).
 -import(scran_sequence, [delimited/3]).
 -import(scran_sequence, [preceded/2]).
 -import(scran_sequence, [sequence/1]).
@@ -150,12 +148,11 @@ on() ->
 join_type() ->
     fun
         (Input) ->
-            (map_result(
-               alt([re_no_case("(INNER )?JOIN"),
-                    re_no_case("LEFT (OUTER )?JOIN"),
-                    re_no_case("RIGHT (OUTER )?JOIN"),
-                    re_no_case("FULL (OUTER )?JOIN")]),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME,
+                alt([re_no_case("(INNER )?JOIN"),
+                     re_no_case("LEFT (OUTER )?JOIN"),
+                     re_no_case("RIGHT (OUTER )?JOIN"),
+                     re_no_case("FULL (OUTER )?JOIN")])))(Input)
     end.
 
 
@@ -163,11 +160,10 @@ table_name() ->
     fun
         (Input) ->
             (sequence(
-               [map_result(
-                  separated_list1(
-                    tag("."),
-                    name()),
-                  kv(?FUNCTION_NAME)),
+               [kv(?FUNCTION_NAME,
+                   separated_list1(
+                     tag("."),
+                     name())),
                 opt(table_alias())]))(Input)
     end.
 
@@ -175,12 +171,14 @@ table_name() ->
 table_alias() ->
     fun
         (Input) ->
-            (map_result(
-               preceded(
-                 sequence([multispace1(),
-                           opt(sequence([tag_no_case("AS"), multispace1()]))]),
-                 name()),
-               kv(?FUNCTION_NAME)))(Input)
+            (kv(?FUNCTION_NAME,
+                preceded(
+                  sequence(
+                    [multispace1(),
+                     opt(sequence(
+                           [tag_no_case("AS"),
+                            multispace1()]))]),
+                  name())))(Input)
     end.
 
 
