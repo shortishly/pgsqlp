@@ -24,7 +24,6 @@
 -export([priv_consult/1]).
 -export([priv_dir/0]).
 -export([reserved/0]).
--export([start/0]).
 -export([t/0]).
 -export([t/1]).
 -export([to_atom/1]).
@@ -36,10 +35,6 @@
 -import(scran_result, [into_atom/1]).
 -import(scran_result, [into_map/1]).
 -import(scran_result, [into_snake_case/1]).
-
-
-start() ->
-    application:ensure_all_started(?MODULE).
 
 
 priv_dir() ->
