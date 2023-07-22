@@ -21,15 +21,11 @@ jobs:
           otp-version: ${{matrix.otp}}
       - run: make all dialyze tests edoc
       - run: bin/coverdata --input _site/cover/eunit.coverdata --output _site/cover/coverage.json --precision 3
-  site:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
       - uses: actions/upload-pages-artifact@v1
         with:
           path: _site
   deploy:
-    needs: site
+    needs: build
     permissions:
       pages: write
       id-token: write
