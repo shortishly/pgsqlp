@@ -20,7 +20,7 @@ jobs:
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
-      - run: make all dialyze eunit edoc
+      - run: make all dialyze tests edoc
       - run: bin/coverdata --input _site/cover/eunit.coverdata --output _site/cover/coverage.json --precision 3
   site:
     needs: build
