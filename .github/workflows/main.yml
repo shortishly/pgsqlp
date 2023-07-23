@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - develop
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
 jobs:
@@ -20,7 +19,11 @@ jobs:
         with:
           otp-version: ${{matrix.otp}}
       - run: make all dialyze tests edoc
-      - run: bin/coverdata --input _site/cover/eunit.coverdata --output _site/cover/coverage.json --precision 3
+      - uses: shortishly/coverdata@main
+        with:
+          input: _site/cover
+          output: _site/cover/coverage.json
+          otp-version: ${{matrix.otp}}
       - uses: actions/upload-pages-artifact@v1
         with:
           path: _site
